@@ -1,0 +1,63 @@
+
+--Test Parameters--
+Strategy: shortest
+Customer Arrival Duration: 100000
+Arrival Rate: 15
+Service Rate: 100
+--RESULTS--
+number served: 6746
+Final Duration: 121751Average customer wait time: 14167
+station #0
+	busy ratio: 0.974054
+	End Of Day Line Size: 417
+	End Of Day Wait time left: 21030
+station #1
+	busy ratio: 0.971885
+	End Of Day Line Size: 416
+	End Of Day Wait time left: 20742
+station #2
+	busy ratio: 0.984435
+	End Of Day Line Size: 416
+	End Of Day Wait time left: 21750
+
+--Test Parameters--
+Strategy: random
+Customer Arrival Duration: 100000
+Arrival Rate: 15
+Service Rate: 100
+--RESULTS--
+number served: 6736
+Final Duration: 135809Average customer wait time: 14746
+station #0
+	busy ratio: 0.824283
+	End Of Day Line Size: 291
+	End Of Day Wait time left: 14674
+station #1
+	busy ratio: 0.799446
+	End Of Day Line Size: 224
+	End Of Day Wait time left: 10865
+station #2
+	busy ratio: 0.983418
+	End Of Day Line Size: 738
+	End Of Day Wait time left: 35808
+
+--Test Parameters--
+Strategy: roundrobin
+Customer Arrival Duration: 100000
+Arrival Rate: 15
+Service Rate: 100
+--RESULTS--
+number served: 6746
+Final Duration: 136164Average customer wait time: 14721
+station #0
+	busy ratio: 0.81891
+	End Of Day Line Size: 274
+	End Of Day Wait time left: 13757
+station #1
+	busy ratio: 0.815032
+	End Of Day Line Size: 261
+	End Of Day Wait time left: 13226
+station #2
+	busy ratio: 0.98349
+	End Of Day Line Size: 735
+	End Of Day Wait time left: 36163
