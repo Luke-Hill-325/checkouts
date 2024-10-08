@@ -126,7 +126,7 @@ struct ServiceStation {
 enum Strategy { roundRobin, randomQ, shortest };
 int main(int argc, char* argv[]){
 	Strategy strat;
-	std::string infoOut = "Use args [roundrobin | random | shortest]";
+	std::string infoOut = "Use args [roundrobin | random | shortest] [int SIMDURATION] [int ARRIVAL_RATE] [int SERVICERATE]";
 	if(argc < 2){
 		std::cout << infoOut << std::endl;
 		return 0;
@@ -208,11 +208,8 @@ int main(int argc, char* argv[]){
 			}
 		}
 	}while (!(simOver));
-	std::cout << std::endl << "Strategy: " << argv[1] << std::endl << "number served: " << numServed << std::endl;
-	printf("duration: ");
-	std::cout << t << std::endl;
-	printf("average wait time: ");
-	std::cout << totalWaitTime / ((long)IDCounter - 1) << std::endl;
+	std::cout << "\n--Test Parameters--\nStrategy: " << argv[1] << "\nCustomer Arrival Duration: " << argv[2] << "\nArrival Rate: " << argv[3] << "\nService Rate: " << argv[4];
+	std::cout << "\n--RESULTS--\nnumber served: " << numServed << "\nFinal Duration: " << t << "\nAverage customer wait time: " << totalWaitTime / ((long)IDCounter - 1) << std::endl; 
 	for (int i = 0; i < NUM_STATIONS; i++) {
 		std::cout << "station #" << i << std:: endl << "\tbusy ratio: " << (double)stations[i].timeBusy / (double)t << std::endl << "\tEnd Of Day Line Size: " << stations[i].EODlength << std::endl;
 		std::cout << "\tEnd Of Day Wait time left: " << stations[i].EODtimeRemaining << std::endl;
