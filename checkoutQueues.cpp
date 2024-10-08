@@ -6,7 +6,7 @@ int randomRuns = 0;
 int randomNat(int N){
 	std::srand(std::time(nullptr)+randomRuns);
 	randomRuns++;
-	return std::rand() / ((RAND_MAX + 1u) / (N - 1)); 
+	return std::rand() % N; 
 }
 int randomPos(int N){
 	return randomNat(N-1) + 1;
@@ -94,7 +94,12 @@ struct ServiceStation {
 	}
 	bool service(){
 		if(!time2Serve){
-			return false;
+			if (queue.getSize()){
+				served = queue.dequeue();
+				time2Serve = served.serviceTime - 1;
+			} else {
+				return false;
+			}
 		}
 		if(--time2Serve){
 			return false;
@@ -132,7 +137,7 @@ int main(int argc, char* argv[]){
 	}
 	int NUM_STATIONS = 3;
 	Duration SIMDURATION = 500; //std::stoi(argv[2]);
-	int ARRIVAL_RATE = 1; //std::stoi(argv[3]);
+	int ARRIVAL_RATE = 2; //std::stoi(argv[3]);
 	int SERVICERATE = 25; //std::stoi(argv[4]);
 	ServiceStation stations[NUM_STATIONS];
 	SimTime t = 0;
@@ -141,7 +146,11 @@ int main(int argc, char* argv[]){
 	bool allStationsEmpty = true;
 	int highestStationLength = 0;
 	int totalWaitTime = 0;
+	int numServed = 0;
 	do {
+		if (t > 90000){
+			break;
+		}
 		if (randomEvent(ARRIVAL_RATE) && t < SIMDURATION) {
 			allStationsEmpty = false;
 			Customer c;
@@ -149,6 +158,7 @@ int main(int argc, char* argv[]){
 			IDCounter++;
 			c.arrivalTime = t;
 			c.serviceTime = randomPos(SERVICERATE);
+			//std::cout << "New Customer at t - " << t << std::endl << "Service Time: " << c.serviceTime << std::endl << "ID: " << c.custID << std::endl << "Station #" << nextStation << std::endl;
 			stations[nextStation].queue.enqueue(c);
 			if (stations[nextStation].lineSize() > highestStationLength){
 				highestStationLength++;
@@ -179,6 +189,7 @@ int main(int argc, char* argv[]){
 		for (int i = 0; i < NUM_STATIONS; i++){
 			if (stations[i].service()){
 				totalWaitTime += t - stations[i].served.arrivalTime;	
+				numServed++;
 			}
 		}
 		t += 1;
@@ -190,6 +201,7 @@ int main(int argc, char* argv[]){
 			}
 		}
 	}while (!(allStationsEmpty && t > SIMDURATION));
+	std::cout << "number served: " << numServed << std::endl;
 	printf("duration: ");
 	std::cout << t << std::endl;
 	printf("average wait time: ");
