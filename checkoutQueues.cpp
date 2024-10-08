@@ -4,7 +4,7 @@
 
 int randomRuns = 0;
 int randomNat(int N){
-	std::srand(std::time(nullptr)+randomRuns);
+	std::srand(std::time(NULL)+randomRuns);
 	randomRuns++;
 	return std::rand() % N; 
 }
@@ -15,7 +15,7 @@ int randomInterval(int A, int B){
 	return A + randomNat(B - A);
 }
 bool randomEvent(int N){
-	return randomPos(N) < 2;
+	return randomNat(N) == 0;
 }
 
 typedef int SimTime;
@@ -79,12 +79,22 @@ class CustomerQueue {
 			size--;
 			return q[f];
 		}
+
+		int estimateWaitTime(){
+			int waitTime = 0;
+			for (int i = front; i != back; i = (i + 1) % capacity){
+				waitTime += q[i].serviceTime;
+			}
+			return waitTime;
+		}
 };
 struct ServiceStation {
 	Customer served;
 	Duration time2Serve;
 	CustomerQueue queue;
 	int timeBusy = 0;
+	int EODlength;
+	int EODtimeRemaining;
 	int lineSize(){
 		int size = queue.getSize();
 		if(time2Serve){
@@ -94,14 +104,15 @@ struct ServiceStation {
 	}
 	bool service(){
 		if(!time2Serve){
-			if (queue.getSize()){
+			if (queue.getSize() > 0){
 				served = queue.dequeue();
-				time2Serve = served.serviceTime - 1;
+				time2Serve = served.serviceTime;
 			} else {
 				return false;
 			}
 		}
-		if(--time2Serve){
+		if(--time2Serve > 0){
+			timeBusy++;
 			return false;
 		} else {
 			if (queue.getSize()){
@@ -122,43 +133,32 @@ int main(int argc, char* argv[]){
 	}
 	std::string stratArg = argv[1];
 	if(!stratArg.compare("roundrobin")){
-		printf("roundrobin\n");
 		strat = roundRobin;
 	} else if(!stratArg.compare("random")){
-		printf("random\n");
 		strat = randomQ;
 	} else if(!stratArg.compare("shortest")){
-		printf("shortest\n");
 		strat = shortest;
-	} else {
-		printf("huh\n");
-		std::cout << infoOut << std::endl;
-		return 0;
 	}
 	int NUM_STATIONS = 3;
-	Duration SIMDURATION = 500; //std::stoi(argv[2]);
-	int ARRIVAL_RATE = 2; //std::stoi(argv[3]);
-	int SERVICERATE = 25; //std::stoi(argv[4]);
+	Duration SIMDURATION = std::stoi(argv[2]);
+	int ARRIVAL_RATE = std::stoi(argv[3]);
+	int SERVICERATE = std::stoi(argv[4]);
 	ServiceStation stations[NUM_STATIONS];
 	SimTime t = 0;
 	int IDCounter = 1;
 	int nextStation = 0;
-	bool allStationsEmpty = true;
+	bool simOver = false;
 	int highestStationLength = 0;
-	int totalWaitTime = 0;
+	long totalWaitTime = 0;
 	int numServed = 0;
 	do {
-		if (t > 90000){
-			break;
-		}
 		if (randomEvent(ARRIVAL_RATE) && t < SIMDURATION) {
-			allStationsEmpty = false;
+			simOver = false;
 			Customer c;
 			c.custID = IDCounter;
 			IDCounter++;
 			c.arrivalTime = t;
 			c.serviceTime = randomPos(SERVICERATE);
-			//std::cout << "New Customer at t - " << t << std::endl << "Service Time: " << c.serviceTime << std::endl << "ID: " << c.custID << std::endl << "Station #" << nextStation << std::endl;
 			stations[nextStation].queue.enqueue(c);
 			if (stations[nextStation].lineSize() > highestStationLength){
 				highestStationLength++;
@@ -191,22 +191,30 @@ int main(int argc, char* argv[]){
 				totalWaitTime += t - stations[i].served.arrivalTime;	
 				numServed++;
 			}
-		}
-		t += 1;
-		allStationsEmpty = true;
-		for (int i = 0; i < NUM_STATIONS; i++){
-			if (stations[i].lineSize()){
-				allStationsEmpty = false;
-				stations[i].timeBusy++;
+			if (t == SIMDURATION){
+				stations[i].EODlength = stations[i].lineSize();
+				stations[i].EODtimeRemaining = stations[i].time2Serve + stations[i].queue.estimateWaitTime();
 			}
 		}
-	}while (!(allStationsEmpty && t > SIMDURATION));
-	std::cout << "number served: " << numServed << std::endl;
+		t += 1;
+		if (t > SIMDURATION){
+			int remainingCustomers = 0;
+			simOver = true;
+			for (int i = 0; i < NUM_STATIONS; i++){
+				if (stations[i].lineSize() > 0){
+					remainingCustomers += stations[i].lineSize();
+					simOver = false;
+				}
+			}
+		}
+	}while (!(simOver));
+	std::cout << std::endl << "Strategy: " << argv[1] << std::endl << "number served: " << numServed << std::endl;
 	printf("duration: ");
 	std::cout << t << std::endl;
 	printf("average wait time: ");
-	std::cout << totalWaitTime / (IDCounter - 1) << std::endl;
+	std::cout << totalWaitTime / ((long)IDCounter - 1) << std::endl;
 	for (int i = 0; i < NUM_STATIONS; i++) {
-		std::cout << "station " << i << " busy ratio: " << (double)stations[i].timeBusy / (double)t << std::endl;
+		std::cout << "station #" << i << std:: endl << "\tbusy ratio: " << (double)stations[i].timeBusy / (double)t << std::endl << "\tEnd Of Day Line Size: " << stations[i].EODlength << std::endl;
+		std::cout << "\tEnd Of Day Wait time left: " << stations[i].EODtimeRemaining << std::endl;
 	}
 }
