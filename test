@@ -1,0 +1,4 @@
+#!/bin/bash
+
+g++ checkoutQueues.cpp
+./a.out shortest
