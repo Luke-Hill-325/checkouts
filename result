@@ -1,66 +1,81 @@
 
 --Test Parameters--
 Strategy: shortest
-Customer Arrival Duration: 100000
+Customer Arrival Duration (Initial Sim Duration): 100000
 Arrival Rate: 15
 Service Rate: 100
 --RESULTS--
-number served: 6746
-Final Duration: 121298
-Average customer wait time: 13465
+number served: 6725
+Final Duration: 141111
 station #0
-	busy ratio: 0.979777
-	End Of Day Line Size: 400
-	End Of Day Wait time left: 21297
+	busy ratio: 0.975494
+	End Of Day Line Size: 806
+	End Of Day Wait time left: 39949
+	Average Wait Time: 33399
+	Max Wait Time: 40025
 station #1
-	busy ratio: 0.972885
-	End Of Day Line Size: 399
-	End Of Day Wait time left: 20366
+	busy ratio: 0.983878
+	End Of Day Line Size: 806
+	End Of Day Wait time left: 41110
+	Average Wait Time: 34049
+	Max Wait Time: 41208
 station #2
-	busy ratio: 0.964723
-	End Of Day Line Size: 399
-	End Of Day Wait time left: 18984
+	busy ratio: 0.970782
+	End Of Day Line Size: 805
+	End Of Day Wait time left: 39140
+	Average Wait Time: 35496
+	Max Wait Time: 39324
 
 --Test Parameters--
 Strategy: random
-Customer Arrival Duration: 100000
+Customer Arrival Duration (Initial Sim Duration): 100000
 Arrival Rate: 15
 Service Rate: 100
 --RESULTS--
-number served: 6738
-Final Duration: 133973
-Average customer wait time: 14199
+number served: 6725
+Final Duration: 144093
 station #0
-	busy ratio: 0.836527
-	End Of Day Line Size: 292
-	End Of Day Wait time left: 14811
+	busy ratio: 0.948061
+	End Of Day Line Size: 761
+	End Of Day Wait time left: 38908
+	Average Wait Time: 30705
+	Max Wait Time: 39074
 station #1
-	busy ratio: 0.812261
-	End Of Day Line Size: 227
-	End Of Day Wait time left: 11078
+	busy ratio: 0.906213
+	End Of Day Line Size: 664
+	End Of Day Wait time left: 32772
+	Average Wait Time: 29231
+	Max Wait Time: 33136
 station #2
-	busy ratio: 0.98322
-	End Of Day Line Size: 701
-	End Of Day Wait time left: 33972
+	busy ratio: 0.984517
+	End Of Day Line Size: 893
+	End Of Day Wait time left: 44092
+	Average Wait Time: 38905
+	Max Wait Time: 44106
 
 --Test Parameters--
 Strategy: roundrobin
-Customer Arrival Duration: 100000
+Customer Arrival Duration (Initial Sim Duration): 100000
 Arrival Rate: 15
 Service Rate: 100
 --RESULTS--
-number served: 6746
-Final Duration: 138512
-Average customer wait time: 14551
+number served: 6725
+Final Duration: 145762
 station #0
-	busy ratio: 0.800111
-	End Of Day Line Size: 261
-	End Of Day Wait time left: 13197
+	busy ratio: 0.899226
+	End Of Day Line Size: 687
+	End Of Day Wait time left: 33314
+	Average Wait Time: 28798
+	Max Wait Time: 33387
 station #1
-	busy ratio: 0.782279
-	End Of Day Line Size: 222
-	End Of Day Wait time left: 10603
+	busy ratio: 0.9238
+	End Of Day Line Size: 738
+	End Of Day Wait time left: 36896
+	Average Wait Time: 30310
+	Max Wait Time: 36970
 station #2
-	busy ratio: 0.98377
-	End Of Day Line Size: 759
-	End Of Day Wait time left: 38511
+	busy ratio: 0.984626
+	End Of Day Line Size: 908
+	End Of Day Wait time left: 45761
+	Average Wait Time: 39753
+	Max Wait Time: 45927

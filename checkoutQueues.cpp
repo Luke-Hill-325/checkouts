@@ -20,6 +20,7 @@ bool randomEvent(int N){
 
 typedef int SimTime;
 typedef int Duration;
+typedef long longDuration;
 typedef int ID;
 struct Customer {
 	ID custID;
@@ -80,8 +81,8 @@ class CustomerQueue {
 			return q[f];
 		}
 
-		int estimateWaitTime(){
-			int waitTime = 0;
+		Duration estimateWaitTime(){
+			Duration waitTime = 0;
 			for (int i = front; i != back; i = (i + 1) % capacity){
 				waitTime += q[i].serviceTime;
 			}
@@ -92,9 +93,13 @@ struct ServiceStation {
 	Customer served;
 	Duration time2Serve;
 	CustomerQueue queue;
-	int timeBusy = 0;
+	Duration timeBusy = 0;
+	longDuration totalWaitTime = 0;
 	int EODlength;
-	int EODtimeRemaining;
+	Duration EODtimeRemaining;
+	int numServed = 0;
+	Duration maxWaitTime = 0;
+
 	int lineSize(){
 		int size = queue.getSize();
 		if(time2Serve){
@@ -119,6 +124,7 @@ struct ServiceStation {
 				served = queue.dequeue();
 				time2Serve = served.serviceTime;
 			}
+			numServed++;
 			return true;
 		}
 	}
@@ -149,7 +155,6 @@ int main(int argc, char* argv[]){
 	int nextStation = 0;
 	bool simOver = false;
 	int highestStationLength = 0;
-	long totalWaitTime = 0;
 	int numServed = 0;
 	do {
 		if (randomEvent(ARRIVAL_RATE) && t < SIMDURATION) {
@@ -188,12 +193,16 @@ int main(int argc, char* argv[]){
 		}
 		for (int i = 0; i < NUM_STATIONS; i++){
 			if (stations[i].service()){
-				totalWaitTime += t - stations[i].served.arrivalTime;	
+				Duration waitTime = t - stations[i].served.arrivalTime;
+				stations[i].totalWaitTime += waitTime; //Assumption: "wait time" refers to time in line, and concludes when customer begins checkout	
+				if (waitTime > stations[i].maxWaitTime){
+					stations[i].maxWaitTime = waitTime;
+				}
 				numServed++;
 			}
 			if (t == SIMDURATION){
 				stations[i].EODlength = stations[i].lineSize();
-				stations[i].EODtimeRemaining = stations[i].time2Serve + stations[i].queue.estimateWaitTime();
+				stations[i].EODtimeRemaining = stations[i].time2Serve + stations[i].queue.estimateWaitTime();	
 			}
 		}
 		t += 1;
@@ -208,10 +217,11 @@ int main(int argc, char* argv[]){
 			}
 		}
 	}while (!(simOver));
-	std::cout << "\n--Test Parameters--\nStrategy: " << argv[1] << "\nCustomer Arrival Duration: " << argv[2] << "\nArrival Rate: " << argv[3] << "\nService Rate: " << argv[4];
-	std::cout << "\n--RESULTS--\nnumber served: " << numServed << "\nFinal Duration: " << t << "\nAverage customer wait time: " << totalWaitTime / ((long)IDCounter - 1) << std::endl; 
+	std::cout << "\n--Test Parameters--\nStrategy: " << argv[1] << "\nCustomer Arrival Duration (Initial Sim Duration): " << argv[2] << "\nArrival Rate: " << argv[3] << "\nService Rate: " << argv[4];
+	std::cout << "\n--RESULTS--\nnumber served: " << numServed << "\nFinal Duration: " << t << std::endl; 
 	for (int i = 0; i < NUM_STATIONS; i++) {
-		std::cout << "station #" << i << std:: endl << "\tbusy ratio: " << (double)stations[i].timeBusy / (double)t << std::endl << "\tEnd Of Day Line Size: " << stations[i].EODlength << std::endl;
-		std::cout << "\tEnd Of Day Wait time left: " << stations[i].EODtimeRemaining << std::endl;
+		ServiceStation s = stations[i];
+		std::cout << "station #" << i << "\n\tbusy ratio: " << (double)s.timeBusy / (double)t << "\n\tEnd Of Day Line Size: " << s.EODlength << std::endl;
+		std::cout << "\tEnd Of Day Wait time left: " << s.EODtimeRemaining << "\n\tAverage Wait Time: " << s.totalWaitTime / s.numServed << "\n\tMax Wait Time: " << s.maxWaitTime << std::endl;
 	}
 }
