@@ -89,6 +89,7 @@ class CustomerQueue {
 			return waitTime;
 		}
 };
+enum Strategy { roundRobin, randomQ, shortest, oneQ};
 struct ServiceStation {
 	Customer served;
 	Duration time2Serve;
@@ -116,8 +117,8 @@ struct ServiceStation {
 				return false;
 			}
 		}
+		timeBusy++;
 		if(--time2Serve > 0){
-			timeBusy++;
 			return false;
 		} else {
 			if (queue.getSize()){
@@ -129,10 +130,9 @@ struct ServiceStation {
 		}
 	}
 };
-enum Strategy { roundRobin, randomQ, shortest };
 int main(int argc, char* argv[]){
 	Strategy strat;
-	std::string infoOut = "Use args [roundrobin | random | shortest] [int SIMDURATION] [int ARRIVAL_RATE] [int SERVICERATE]";
+	std::string infoOut = "Use args [roundrobin | random | shortest | onequeue] [int SIMDURATION] [int ARRIVAL_RATE] [int SERVICERATE]";
 	if(argc < 2){
 		std::cout << infoOut << std::endl;
 		return 0;
@@ -144,8 +144,11 @@ int main(int argc, char* argv[]){
 		strat = randomQ;
 	} else if(!stratArg.compare("shortest")){
 		strat = shortest;
+	} else if (!stratArg.compare("onequeue")){
+		strat = oneQ;
 	}
-	int NUM_STATIONS = 3;
+
+	int NUM_STATIONS = 5;
 	Duration SIMDURATION = std::stoi(argv[2]);
 	int ARRIVAL_RATE = std::stoi(argv[3]);
 	int SERVICERATE = std::stoi(argv[4]);
@@ -156,6 +159,10 @@ int main(int argc, char* argv[]){
 	bool simOver = false;
 	int highestStationLength = 0;
 	int numServed = 0;
+	CustomerQueue arrivalQueue;
+	longDuration totalWaitTime = 0;
+	Duration maxWaitTime = 0;
+
 	do {
 		if (randomEvent(ARRIVAL_RATE) && t < SIMDURATION) {
 			simOver = false;
@@ -164,54 +171,82 @@ int main(int argc, char* argv[]){
 			IDCounter++;
 			c.arrivalTime = t;
 			c.serviceTime = randomPos(SERVICERATE);
-			stations[nextStation].queue.enqueue(c);
-			if (stations[nextStation].lineSize() > highestStationLength){
-				highestStationLength++;
-			}
-			switch(strat){
-				case roundRobin:
-					nextStation = (nextStation + 1) % NUM_STATIONS;
-					break;
-				case randomQ:
-					nextStation = randomNat(NUM_STATIONS);
-					break;
-				case shortest:
-					{
-						int shortestStation = 0;
-						int shortestMeasure = stations[0].lineSize();
-						for (int i = 1; i < NUM_STATIONS; i++){
-							int measure = stations[i].lineSize();
-							if (measure < shortestMeasure){
-								shortestStation = i;
-								shortestMeasure = measure;
+			if (strat == oneQ){
+				arrivalQueue.enqueue(c);
+			} else {
+				stations[nextStation].queue.enqueue(c);
+				if (stations[nextStation].lineSize() > highestStationLength){
+					highestStationLength++;
+				}
+				switch(strat){
+					case roundRobin:
+						nextStation = (nextStation + 1) % NUM_STATIONS;
+						break;
+					case randomQ:
+						nextStation = randomNat(NUM_STATIONS);
+						break;
+					case shortest:
+						{
+							int shortestStation = 0;
+							int shortestMeasure = stations[0].lineSize();
+							for (int i = 1; i < NUM_STATIONS; i++){
+								int measure = stations[i].lineSize();
+								if (measure < shortestMeasure){
+									shortestStation = i;
+									shortestMeasure = measure;
+								}
 							}
+							nextStation = shortestStation;
 						}
-						nextStation = shortestStation;
-					}
-					break;
+						break;
+				}
 			}
 		}
 		for (int i = 0; i < NUM_STATIONS; i++){
+			longDuration waitTime = t;
 			if (stations[i].service()){
-				Duration waitTime = t - stations[i].served.arrivalTime;
-				stations[i].totalWaitTime += waitTime; //Assumption: "wait time" refers to time in line, and concludes when customer begins checkout	
-				if (waitTime > stations[i].maxWaitTime){
-					stations[i].maxWaitTime = waitTime;
-				}
 				numServed++;
+				if (strat == oneQ && arrivalQueue.getSize() > 0){
+					Customer c = arrivalQueue.dequeue();
+					waitTime -= c.arrivalTime;
+					stations[i].queue.enqueue(c);
+					totalWaitTime += waitTime;
+					if (waitTime > maxWaitTime){
+						maxWaitTime = waitTime;
+					}
+				} else if (strat != oneQ){
+					waitTime -= stations[i].served.arrivalTime;
+					stations[i].totalWaitTime += waitTime; //Assumption: "wait time" refers to time in line, and concludes when customer begins checkout	
+					if (waitTime > stations[i].maxWaitTime){
+						stations[i].maxWaitTime = waitTime;
+					}
+				}
+			} else if(stations[i].time2Serve == 0 && strat == oneQ && arrivalQueue.getSize()){
+				Customer c = arrivalQueue.dequeue();
+				waitTime -= c.arrivalTime;
+				stations[i].served = c;
+				stations[i].time2Serve = c.serviceTime - 1;
+				totalWaitTime += waitTime;
+				if (waitTime > maxWaitTime){
+					maxWaitTime = waitTime;
+				}
+				stations[i].timeBusy++;
 			}
-			if (t == SIMDURATION){
+			if (t == SIMDURATION && strat != oneQ){
 				stations[i].EODlength = stations[i].lineSize();
 				stations[i].EODtimeRemaining = stations[i].time2Serve + stations[i].queue.estimateWaitTime();	
 			}
 		}
 		t += 1;
 		if (t > SIMDURATION){
-			int remainingCustomers = 0;
 			simOver = true;
 			for (int i = 0; i < NUM_STATIONS; i++){
 				if (stations[i].lineSize() > 0){
-					remainingCustomers += stations[i].lineSize();
+					simOver = false;
+				}
+			}
+			if (strat == oneQ){
+				if (arrivalQueue.getSize() > 0){
 					simOver = false;
 				}
 			}
@@ -219,9 +254,15 @@ int main(int argc, char* argv[]){
 	}while (!(simOver));
 	std::cout << "\n--Test Parameters--\nStrategy: " << argv[1] << "\nCustomer Arrival Duration (Initial Sim Duration): " << argv[2] << "\nArrival Rate: " << argv[3] << "\nService Rate: " << argv[4];
 	std::cout << "\n--RESULTS--\nnumber served: " << numServed << "\nFinal Duration: " << t << std::endl; 
+	if (strat == oneQ){
+		std::cout << "Average Wait Time: " << totalWaitTime / numServed << "\nMax Wait Time: " << maxWaitTime << std:: endl;
+	}
 	for (int i = 0; i < NUM_STATIONS; i++) {
 		ServiceStation s = stations[i];
-		std::cout << "station #" << i << "\n\tbusy ratio: " << (double)s.timeBusy / (double)t << "\n\tEnd Of Day Line Size: " << s.EODlength << std::endl;
-		std::cout << "\tEnd Of Day Wait time left: " << s.EODtimeRemaining << "\n\tAverage Wait Time: " << s.totalWaitTime / s.numServed << "\n\tMax Wait Time: " << s.maxWaitTime << std::endl;
+		std::cout << "station #" << i << "\n\tbusy ratio: " << (double)s.timeBusy / (double)t << std::endl;
+		if (strat != oneQ){
+			std::cout << "\tEnd Of Day Line Size: " << s.EODlength << "\n\tEnd Of Day wait time left: " << s.EODtimeRemaining << std::endl;
+			std::cout << "\tAverage Wait Time: " << s.totalWaitTime / s.numServed << "\n\tMax Wait Time: " << s.maxWaitTime << std::endl;
+		}
 	}
 }

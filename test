@@ -1,6 +1,7 @@
 #!/bin/bash
 
 g++ checkoutQueues.cpp
-./a.out shortest 100000 15 100 > result
-./a.out random 100000 15 100 >> result
-./a.out roundrobin 100000 15 100 >> result
+./a.out shortest 10000000 13 120 > result
+./a.out random 10000000 13 120 >> result
+./a.out roundrobin 10000000 13 120 >> result
+./a.out onequeue 10000000 13 120 >> result
